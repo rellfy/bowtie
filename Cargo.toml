@@ -1,0 +1,13 @@
+[package]
+name = "bowtie"
+version = "0.1.0"
+authors = ["Lorenzo Fontoura <lorenzo@nioel.com>"]
+edition = "2021"
+license = "MIT"
+homepage = "https://github.com/rellfy/bowtie"
+repository = "https://github.com/rellfy/bowtie"
+description = "Bowtie diagram generator"
+readme = "README.md"
+
+[dependencies]
+
