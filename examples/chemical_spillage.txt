@@ -1,0 +1,18 @@
+title Chemical Spillage
+cause Equipment Failure
+cause Operator Error
+cause Structural Failure
+cause Natural Disasters
+event Chemical Spillage
+consequence Environmental Damage
+consequence Shutdown of Operations
+consequence Injury
+consequence Legal Consequences
+barrier Regular Equipment Maintenance: Equipment Failure
+barrier Proper Operator Training: Operator Error
+barrier Structural Integrity Checks: Structural Failure
+barrier Disaster Preparedness Plans: Natural Disasters
+barrier Containment Measures: Environmental Damage
+barrier Backup Operations Plan: Shutdown of Operations
+barrier Safety Protocols: Injury
+barrier Legal Compliance: Legal Consequences, Shutdown of Operations
