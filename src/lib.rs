@@ -1,3 +1,7 @@
+use crate::render::{render_diagram, Renderer};
+mod render;
+pub mod svg;
+
 #[derive(Default, Debug)]
 struct Diagram {
     title: String,
@@ -18,10 +22,12 @@ enum ComponentKind {
     Consequence,
 }
 
-pub fn generate_bowtie(input: &str) -> Vec<u8> {
+pub fn generate_bowtie<R>(input: &str, renderer: R) -> Vec<u8>
+where
+    R: Renderer,
+{
     let diagram = parse_diagram(input);
-    println!("diagram: {:#?}", diagram);
-    vec![]
+    render_diagram(renderer, &diagram)
 }
 
 fn parse_diagram(input: &str) -> Diagram {

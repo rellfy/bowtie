@@ -10,4 +10,4 @@ description = "Bowtie diagram generator"
 readme = "README.md"
 
 [dependencies]
-
+svg = "0.14.0"
