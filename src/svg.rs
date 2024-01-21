@@ -1,4 +1,4 @@
-use crate::render::{Point, Rectangle, Renderer};
+use crate::render::{Rectangle, Renderer, Vector2};
 use svg::node::element::path::Data;
 use svg::node::element::{Path, Text};
 use svg::Document;
@@ -23,7 +23,7 @@ impl Renderer for SvgRenderer {
         self
     }
 
-    fn draw_line(mut self, from: &Point, to: &Point) -> Self {
+    fn draw_line(mut self, from: &Vector2, to: &Vector2) -> Self {
         self
     }
 
@@ -47,7 +47,7 @@ impl Renderer for SvgRenderer {
     }
 
     fn draw_rectangle(mut self, rectangle: &Rectangle) -> Self {
-        let top_left = Point {
+        let top_left = Vector2 {
             x: rectangle.centre.x - (rectangle.width / 2.0),
             y: rectangle.centre.y - (rectangle.height / 2.0),
         };
@@ -67,7 +67,7 @@ impl Renderer for SvgRenderer {
         self
     }
 
-    fn draw_text_with_rectangle(mut self, text: &str, point: &Point) -> Self {
+    fn draw_text_with_rectangle(mut self, text: &str, point: &Vector2) -> Self {
         let width = (text.len() as f64) * 13.0;
         let height = 50.0;
         let rectangle = Rectangle {

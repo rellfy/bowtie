@@ -3,27 +3,26 @@ use crate::{Component, ComponentKind, Diagram};
 const COMPONENT_HEIGHT: f64 = 50.0;
 const COMPONENT_MARGIN_BOTTOM: f64 = 20.0;
 
-// TODO rename to Vector2.
 #[derive(Clone, Copy, Debug)]
-pub struct Point {
+pub struct Vector2 {
     pub x: f64,
     pub y: f64,
 }
 
 #[derive(Clone, Copy)]
 pub struct Rectangle {
-    pub centre: Point,
+    pub centre: Vector2,
     pub width: f64,
     pub height: f64,
 }
 
 pub trait Renderer {
     fn setup(self, width: f64, height: f64) -> Self;
-    fn draw_line(self, from: &Point, to: &Point) -> Self;
+    fn draw_line(self, from: &Vector2, to: &Vector2) -> Self;
     fn draw_circle(self, radius: f64) -> Self;
     fn draw_text(self, text: &str, containment: &Rectangle) -> Self;
     fn draw_rectangle(self, rectangle: &Rectangle) -> Self;
-    fn draw_text_with_rectangle(self, text: &str, centre: &Point) -> Self;
+    fn draw_text_with_rectangle(self, text: &str, centre: &Vector2) -> Self;
     fn into_bytes(self) -> Vec<u8>;
 }
 
@@ -101,7 +100,7 @@ where
         } else {
             canvas.width - box_width - 10.0
         };
-        r = r.draw_text_with_rectangle(&cause.name, &Point { x, y });
+        r = r.draw_text_with_rectangle(&cause.name, &Vector2 { x, y });
     }
     r
 }
