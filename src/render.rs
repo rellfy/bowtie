@@ -46,6 +46,15 @@ where
         .iter()
         .filter(|c| c.kind == ComponentKind::Consequence);
     let (r, canvas) = setup_canvas(r, causes.clone(), consequences.clone());
+    // Draw a border around the canvas, mostly for debugging purposes.
+    let r = r.draw_rectangle(&Rectangle {
+        centre: Vector2 {
+            x: canvas.width / 2.0,
+            y: canvas.height / 2.0,
+        },
+        width: canvas.width,
+        height: canvas.height,
+    });
     let r = render_components(r, causes, ComponentKind::Cause, &canvas);
     let r = render_components(r, consequences, ComponentKind::Consequence, &canvas);
     r.into_bytes()

@@ -24,6 +24,13 @@ impl Renderer for SvgRenderer {
     }
 
     fn draw_line(mut self, from: &Vector2, to: &Vector2) -> Self {
+        let data = Data::new().move_to((from.x, from.y)).line_to((to.x, to.y));
+        let path = Path::new()
+            .set("fill", "none")
+            .set("stroke", "black")
+            .set("stroke-width", self.stroke_width)
+            .set("d", data);
+        self.document = self.document.add(path);
         self
     }
 
