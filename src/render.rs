@@ -19,7 +19,7 @@ pub struct Rectangle {
 pub trait Renderer {
     fn setup(self, width: f64, height: f64) -> Self;
     fn draw_line(self, from: &Vector2, to: &Vector2) -> Self;
-    fn draw_circle(self, radius: f64) -> Self;
+    fn draw_circle(self, radius: f64, centre: &Vector2) -> Self;
     fn draw_text(self, text: &str, containment: &Rectangle) -> Self;
     fn draw_rectangle(self, rectangle: &Rectangle) -> Self;
     fn draw_text_with_rectangle(self, text: &str, centre: &Vector2) -> Self;
@@ -57,7 +57,35 @@ where
     });
     let r = render_components(r, causes, ComponentKind::Cause, &canvas);
     let r = render_components(r, consequences, ComponentKind::Consequence, &canvas);
+    let r = render_event_circle(r, &diagram, &canvas);
     r.into_bytes()
+}
+
+fn render_event_circle<R>(r: R, diagram: &Diagram, canvas: &Canvas) -> R
+where
+    R: Renderer,
+{
+    let width = (diagram.event.len() as f64) * 13.0 + 5.0;
+    let radius = width / 2.0;
+    let r = r.draw_circle(
+        radius,
+        &Vector2 {
+            x: canvas.width / 2.0,
+            y: canvas.height / 2.0,
+        },
+    );
+    let r = r.draw_text(
+        &diagram.event,
+        &Rectangle {
+            centre: Vector2 {
+                x: canvas.width / 2.0,
+                y: canvas.height / 2.0,
+            },
+            width: radius,
+            height: radius,
+        },
+    );
+    r
 }
 
 fn setup_canvas<'a, R, Ca, Co>(r: R, causes: Ca, consequences: Co) -> (R, Canvas)

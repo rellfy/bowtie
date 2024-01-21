@@ -1,6 +1,6 @@
 use crate::render::{Rectangle, Renderer, Vector2};
 use svg::node::element::path::Data;
-use svg::node::element::{Path, Text};
+use svg::node::element::{Circle, Path, Text};
 use svg::Document;
 
 pub struct SvgRenderer {
@@ -34,7 +34,15 @@ impl Renderer for SvgRenderer {
         self
     }
 
-    fn draw_circle(self, radius: f64) -> Self {
+    fn draw_circle(mut self, radius: f64, centre: &Vector2) -> Self {
+        let circle = Circle::new()
+            .set("cx", centre.x)
+            .set("cy", centre.y)
+            .set("r", radius)
+            .set("stroke", "black")
+            .set("stroke-width", self.stroke_width)
+            .set("fill", "none");
+        self.document = self.document.add(circle);
         self
     }
 
