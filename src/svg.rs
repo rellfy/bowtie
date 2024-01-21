@@ -34,8 +34,8 @@ impl Renderer for SvgRenderer {
     fn draw_text(mut self, text: &str, containment: &Rectangle) -> Self {
         let font_size = 24.0;
         let width = (text.len() as f64) * font_size / 2.0;
-        let y = containment.top_left.y + (containment.height / 2.0) + (font_size / 4.0);
-        let x = containment.top_left.x + (containment.width / 2.0) - (width / 2.0);
+        let y = containment.centre.y + (font_size / 4.0);
+        let x = containment.centre.x - (width / 2.0);
         let text = Text::new()
             .set("x", x)
             .set("y", y)
@@ -47,8 +47,12 @@ impl Renderer for SvgRenderer {
     }
 
     fn draw_rectangle(mut self, rectangle: &Rectangle) -> Self {
+        let top_left = Point {
+            x: rectangle.centre.x - (rectangle.width / 2.0),
+            y: rectangle.centre.y - (rectangle.height / 2.0),
+        };
         let data = Data::new()
-            .move_to((rectangle.top_left.x, rectangle.top_left.y))
+            .move_to((top_left.x, top_left.y))
             .line_by((rectangle.width, 0))
             .line_by((0, rectangle.height))
             .line_by((-rectangle.width, 0))
@@ -62,15 +66,16 @@ impl Renderer for SvgRenderer {
         self
     }
 
-    fn draw_text_with_rectangle(mut self, text: &str, rectangle: &Rectangle) -> Self {
-        self = self.draw_text(text, rectangle);
-        let mut padded_rectangle = rectangle.clone();
-        let padding = 2.0;
-        padded_rectangle.top_left.y -= padding;
-        padded_rectangle.top_left.x -= padding;
-        padded_rectangle.width += padding;
-        padded_rectangle.height += padding;
-        self = self.draw_rectangle(&padded_rectangle);
+    fn draw_text_with_rectangle(mut self, text: &str, point: &Point) -> Self {
+        let width = (text.len() as f64) * 2.0 + 100.0;
+        let height = 50.0;
+        let rectangle = Rectangle {
+            centre: point.clone(),
+            width,
+            height,
+        };
+        self = self.draw_text(text, &rectangle);
+        self = self.draw_rectangle(&rectangle.with_padding(2.0));
         self
     }
 

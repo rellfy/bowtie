@@ -8,7 +8,7 @@ pub struct Point {
 
 #[derive(Clone, Copy)]
 pub struct Rectangle {
-    pub top_left: Point,
+    pub centre: Point,
     pub width: f64,
     pub height: f64,
 }
@@ -19,7 +19,7 @@ pub trait Renderer {
     fn draw_circle(self, radius: f64) -> Self;
     fn draw_text(self, text: &str, containment: &Rectangle) -> Self;
     fn draw_rectangle(self, rectangle: &Rectangle) -> Self;
-    fn draw_text_with_rectangle(self, text: &str, rectangle: &Rectangle) -> Self;
+    fn draw_text_with_rectangle(self, text: &str, centre: &Point) -> Self;
     fn into_bytes(self) -> Vec<u8>;
 }
 
@@ -28,13 +28,14 @@ where
     R: Renderer,
 {
     let r = r.setup(1000.0, 500.0);
-    let r = r.draw_text_with_rectangle(
-        "some_text",
-        &Rectangle {
-            top_left: Point { x: 18.0, y: 80.0 },
-            width: 200.0,
-            height: 50.0,
-        },
-    );
+    let r = r.draw_text_with_rectangle("some_text", &Point { x: 100.0, y: 80.0 });
     r.into_bytes()
+}
+
+impl Rectangle {
+    pub fn with_padding(mut self, padding: f64) -> Self {
+        self.width += padding;
+        self.height += padding;
+        self
+    }
 }

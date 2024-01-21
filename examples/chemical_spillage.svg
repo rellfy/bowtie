@@ -1,6 +1,0 @@
-<svg viewBox="0 0 1000 500" xmlns="http://www.w3.org/2000/svg">
-<text fill="black" font-size="24" x="64" y="111">
-some_text
-</text>
-<path d="M16,78 l202,0 l0,52 l-202,0 z" fill="none" stroke="black" stroke-width="3"/>
-</svg>
