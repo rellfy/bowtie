@@ -35,7 +35,7 @@ impl Renderer for SvgRenderer {
         let font_size = 24.0;
         let width = (text.len() as f64) * font_size / 2.0;
         let y = containment.centre.y + (font_size / 4.0);
-        let x = containment.centre.x - (width / 2.0);
+        let x = containment.centre.x - (width / 2.2);
         let text = Text::new()
             .set("x", x)
             .set("y", y)
@@ -61,13 +61,14 @@ impl Renderer for SvgRenderer {
             .set("fill", "none")
             .set("stroke", "black")
             .set("stroke-width", self.stroke_width)
+            .set("font-family", "Lucida Console")
             .set("d", data);
         self.document = self.document.add(path);
         self
     }
 
     fn draw_text_with_rectangle(mut self, text: &str, point: &Point) -> Self {
-        let width = (text.len() as f64) * 2.0 + 100.0;
+        let width = (text.len() as f64) * 13.0;
         let height = 50.0;
         let rectangle = Rectangle {
             centre: point.clone(),

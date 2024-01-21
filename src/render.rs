@@ -1,6 +1,10 @@
-use crate::Diagram;
+use crate::{Component, ComponentKind, Diagram};
 
-#[derive(Clone, Copy)]
+const COMPONENT_HEIGHT: f64 = 50.0;
+const COMPONENT_MARGIN_BOTTOM: f64 = 20.0;
+
+// TODO rename to Vector2.
+#[derive(Clone, Copy, Debug)]
 pub struct Point {
     pub x: f64,
     pub y: f64,
@@ -23,13 +27,83 @@ pub trait Renderer {
     fn into_bytes(self) -> Vec<u8>;
 }
 
+struct Canvas {
+    height: f64,
+    width: f64,
+    causes_container_height: f64,
+    consequences_container_height: f64,
+}
+
 pub fn render_diagram<R>(r: R, diagram: &Diagram) -> Vec<u8>
 where
     R: Renderer,
 {
-    let r = r.setup(1000.0, 500.0);
-    let r = r.draw_text_with_rectangle("some_text", &Point { x: 100.0, y: 80.0 });
+    let causes = diagram
+        .components
+        .iter()
+        .filter(|c| c.kind == ComponentKind::Cause);
+    let consequences = diagram
+        .components
+        .iter()
+        .filter(|c| c.kind == ComponentKind::Consequence);
+    let (r, canvas) = setup_canvas(r, causes.clone(), consequences.clone());
+    let r = render_components(r, causes, ComponentKind::Cause, &canvas);
+    let r = render_components(r, consequences, ComponentKind::Consequence, &canvas);
     r.into_bytes()
+}
+
+fn setup_canvas<'a, R, Ca, Co>(r: R, causes: Ca, consequences: Co) -> (R, Canvas)
+where
+    Ca: Iterator<Item = &'a Component> + Clone,
+    Co: Iterator<Item = &'a Component> + Clone,
+    R: Renderer,
+{
+    let causes_container_height = calculate_container_height(causes);
+    let consequences_container_height = calculate_container_height(consequences);
+    let max_container_height = causes_container_height.max(consequences_container_height);
+    let canvas_height = max_container_height * 1.1 + 50.0;
+    let canvas = Canvas {
+        height: canvas_height,
+        width: 1000.0,
+        causes_container_height,
+        consequences_container_height,
+    };
+    let r = r.setup(canvas.width, canvas.height);
+    (r, canvas)
+}
+
+fn calculate_container_height<'a, C>(components: C) -> f64
+where
+    C: Iterator<Item = &'a Component> + Clone,
+{
+    let components_count = components.count() as f64;
+    components_count * COMPONENT_HEIGHT + ((components_count - 1.0) * COMPONENT_MARGIN_BOTTOM)
+}
+
+fn render_components<'a, C, R>(mut r: R, components: C, kind: ComponentKind, canvas: &Canvas) -> R
+where
+    C: Iterator<Item = &'a Component> + Clone,
+    R: Renderer,
+{
+    let is_cause = kind == ComponentKind::Cause;
+    let container_height = if is_cause {
+        canvas.causes_container_height
+    } else {
+        canvas.consequences_container_height
+    };
+    let components_container_top = (canvas.height / 2.0) - (container_height / 2.0);
+    for (i, cause) in components.enumerate().map(|(i, c)| (i as f64, c)) {
+        let y_relative = i * COMPONENT_HEIGHT + (i * COMPONENT_MARGIN_BOTTOM);
+        let y = components_container_top + y_relative;
+        let box_width = (cause.name.len() as f64) * 13.0;
+        let x = if is_cause {
+            (box_width / 2.0) + 10.0
+        } else {
+            canvas.width - box_width - 10.0
+        };
+        r = r.draw_text_with_rectangle(&cause.name, &Point { x, y });
+    }
+    r
 }
 
 impl Rectangle {
