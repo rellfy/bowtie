@@ -85,8 +85,8 @@ impl Renderer for SvgRenderer {
     }
 
     fn draw_text_with_rectangle(mut self, text: &str, rectangle: &Rectangle) -> Self {
-        self = self.draw_text(text, &rectangle);
         self = self.draw_rectangle(&rectangle.with_padding(2.0));
+        self = self.draw_text(text, &rectangle);
         self
     }
 
