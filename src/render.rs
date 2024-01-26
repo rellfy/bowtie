@@ -100,7 +100,7 @@ where
     let canvas_height = max_container_height * 1.1 + 50.0;
     let canvas = Canvas {
         height: canvas_height,
-        width: 1000.0,
+        width: 2000.0,
         causes_container_height,
         consequences_container_height,
     };
@@ -131,11 +131,11 @@ where
     for (i, cause) in components.enumerate().map(|(i, c)| (i as f64, c)) {
         let y_relative = i * COMPONENT_HEIGHT + (i * COMPONENT_MARGIN_BOTTOM);
         let y = components_container_top + y_relative;
-        let box_width = (cause.name.len() as f64) * 13.0;
+        let box_width = (cause.name.len() as f64) * 15.0;
         let x = if is_cause {
             (box_width / 2.0) + 10.0
         } else {
-            canvas.width - box_width - 10.0
+            canvas.width - (box_width / 2.0) - 20.0
         };
         r = r.draw_text_with_rectangle(&cause.name, &Vector2 { x, y });
     }

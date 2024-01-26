@@ -83,7 +83,7 @@ impl Renderer for SvgRenderer {
     }
 
     fn draw_text_with_rectangle(mut self, text: &str, point: &Vector2) -> Self {
-        let width = (text.len() as f64) * 13.0;
+        let width = (text.len() as f64) * 15.0;
         let height = 50.0;
         let rectangle = Rectangle {
             centre: point.clone(),
