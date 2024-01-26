@@ -22,7 +22,7 @@ pub trait Renderer {
     fn draw_circle(self, radius: f64, centre: &Vector2) -> Self;
     fn draw_text(self, text: &str, containment: &Rectangle) -> Self;
     fn draw_rectangle(self, rectangle: &Rectangle) -> Self;
-    fn draw_text_with_rectangle(self, text: &str, centre: &Vector2) -> Self;
+    fn draw_text_with_rectangle(self, text: &str, rectangle: &Rectangle) -> Self;
     fn into_bytes(self) -> Vec<u8>;
 }
 
@@ -128,16 +128,22 @@ where
         canvas.consequences_container_height
     };
     let components_container_top = (canvas.height / 2.0) - (container_height / 2.0);
-    for (i, cause) in components.enumerate().map(|(i, c)| (i as f64, c)) {
+    let longest_name = components.clone().map(|c| c.name.len()).max().unwrap_or(0) as f64;
+    for (i, component) in components.enumerate().map(|(i, c)| (i as f64, c)) {
         let y_relative = i * COMPONENT_HEIGHT + (i * COMPONENT_MARGIN_BOTTOM);
         let y = components_container_top + y_relative;
-        let box_width = (cause.name.len() as f64) * 15.0;
+        let box_width = longest_name * 15.0;
         let x = if is_cause {
             (box_width / 2.0) + 10.0
         } else {
             canvas.width - (box_width / 2.0) - 20.0
         };
-        r = r.draw_text_with_rectangle(&cause.name, &Vector2 { x, y });
+        let rectangle = Rectangle {
+            centre: Vector2 { x, y },
+            width: box_width,
+            height: 50.0,
+        };
+        r = r.draw_text_with_rectangle(&component.name, &rectangle);
     }
     r
 }
