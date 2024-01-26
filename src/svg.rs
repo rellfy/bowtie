@@ -3,6 +3,8 @@ use svg::node::element::path::Data;
 use svg::node::element::{Circle, Path, Text};
 use svg::Document;
 
+const DEFAULT_BG_FILL: &str = "white";
+
 pub struct SvgRenderer {
     document: Document,
     stroke_width: u32,
@@ -41,7 +43,7 @@ impl Renderer for SvgRenderer {
             .set("r", radius)
             .set("stroke", "black")
             .set("stroke-width", self.stroke_width)
-            .set("fill", "none");
+            .set("fill", DEFAULT_BG_FILL);
         self.document = self.document.add(circle);
         self
     }
@@ -73,7 +75,7 @@ impl Renderer for SvgRenderer {
             .line_by((-rectangle.width, 0))
             .close();
         let path = Path::new()
-            .set("fill", "none")
+            .set("fill", DEFAULT_BG_FILL)
             .set("stroke", "black")
             .set("stroke-width", self.stroke_width)
             .set("font-family", "Lucida Console")
