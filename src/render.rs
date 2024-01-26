@@ -33,7 +33,7 @@ struct Canvas {
     consequences_container_height: f64,
 }
 
-pub fn render_diagram<R>(r: R, diagram: &Diagram) -> Vec<u8>
+pub(crate) fn render_diagram<R>(r: R, diagram: &Diagram) -> Vec<u8>
 where
     R: Renderer,
 {
