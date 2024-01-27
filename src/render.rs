@@ -42,16 +42,8 @@ pub(crate) fn render_diagram<R>(r: R, diagram: &Diagram) -> Vec<u8>
 where
     R: Renderer,
 {
-    let causes = diagram
-        .components
-        .iter()
-        .filter(|c| c.kind == ComponentKind::Cause)
-        .collect::<Vec<&Component>>();
-    let consequences = diagram
-        .components
-        .iter()
-        .filter(|c| c.kind == ComponentKind::Consequence)
-        .collect::<Vec<&Component>>();
+    let causes = filter_components(&diagram, ComponentKind::Cause);
+    let consequences = filter_components(&diagram, ComponentKind::Consequence);
     let max_component_box_width = calculate_max_components_box_width(&causes, &consequences);
     let (r, canvas) = setup_canvas(r, &causes, &consequences, max_component_box_width);
     // Draw a border around the canvas, mostly for debugging purposes.
@@ -79,6 +71,14 @@ where
     );
     let r = render_event_circle(r, &diagram, &canvas);
     r.into_bytes()
+}
+
+fn filter_components(diagram: &Diagram, kind: ComponentKind) -> Vec<&Component> {
+    diagram
+        .components
+        .iter()
+        .filter(|c| c.kind == kind)
+        .collect::<Vec<&Component>>()
 }
 
 fn render_event_circle<R>(r: R, diagram: &Diagram, canvas: &Canvas) -> R
