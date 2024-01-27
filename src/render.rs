@@ -1,6 +1,5 @@
 use crate::{Component, ComponentKind, Diagram};
-use std::io::empty;
-use std::sync::Barrier;
+use std::collections::HashSet;
 
 const COMPONENT_HEIGHT: f64 = 50.0;
 const BARRIER_WIDTH: f64 = 50.0;
@@ -44,8 +43,23 @@ where
 {
     let causes = filter_components(&diagram, ComponentKind::Cause);
     let consequences = filter_components(&diagram, ComponentKind::Consequence);
+    let barriers_causes = filter_barriers(&causes);
+    let barriers_consequences = filter_barriers(&consequences);
     let max_component_box_width = calculate_max_components_box_width(&causes, &consequences);
-    let (r, canvas) = setup_canvas(r, &causes, &consequences, max_component_box_width);
+    let max_barrier_container_width =
+        calculate_max_barriers_container_width(&barriers_causes, &barriers_consequences);
+    println!(
+        "max barrier container width: {}",
+        max_barrier_container_width
+    );
+    let (r, canvas) = setup_canvas(
+        r,
+        &causes,
+        &consequences,
+        diagram,
+        max_component_box_width,
+        max_barrier_container_width,
+    );
     // Draw a border around the canvas, mostly for debugging purposes.
     let r = r.draw_rectangle(&Rectangle {
         centre: Vector2 {
@@ -79,6 +93,16 @@ fn filter_components(diagram: &Diagram, kind: ComponentKind) -> Vec<&Component> 
         .iter()
         .filter(|c| c.kind == kind)
         .collect::<Vec<&Component>>()
+}
+
+fn filter_barriers<'a>(components: &'a [&Component]) -> HashSet<&'a str> {
+    let mut barriers = HashSet::<&str>::new();
+    for component in components {
+        for component_barrier in &component.barriers {
+            barriers.insert(component_barrier);
+        }
+    }
+    barriers
 }
 
 fn render_event_circle<R>(r: R, diagram: &Diagram, canvas: &Canvas) -> R
@@ -116,7 +140,9 @@ fn setup_canvas<'a, R>(
     r: R,
     causes: &[&Component],
     consequences: &[&Component],
+    diagram: &Diagram,
     max_component_box_width: f64,
+    max_barriers_container_width: f64,
 ) -> (R, Canvas)
 where
     R: Renderer,
@@ -125,9 +151,14 @@ where
     let consequences_container_height = calculate_components_container_height(consequences);
     let max_container_height = causes_container_height.max(consequences_container_height);
     let canvas_height = max_container_height * 1.1 + 50.0;
+    let width = calculate_canvas_width(
+        diagram,
+        max_component_box_width,
+        max_barriers_container_width,
+    );
     let canvas = Canvas {
         height: canvas_height,
-        width: 2000.0,
+        width,
         causes_container_height,
         consequences_container_height,
     };
@@ -140,10 +171,10 @@ fn calculate_components_container_height(components: &[&Component]) -> f64 {
     components_count * COMPONENT_HEIGHT + ((components_count - 1.0) * COMPONENT_MARGIN_BOTTOM)
 }
 
-fn calculate_barriers_container_width(barriers: &[&Barrier]) -> f64 {
+fn calculate_barriers_container_width(barriers: &HashSet<&str>) -> f64 {
     let barriers_count = barriers.len() as f64;
     let padding = BARRIERS_CONTAINER_HORIZONTAL_PADDING * 2.0;
-    barriers_count * BARRIER_WIDTH * ((barriers_count - 1.0) * BARRIER_MARGIN_RIGHT) + padding
+    barriers_count * BARRIER_WIDTH + ((barriers_count - 1.0) * BARRIER_MARGIN_RIGHT) + padding
 }
 
 fn calculate_canvas_width(
@@ -156,7 +187,7 @@ fn calculate_canvas_width(
         + (max_barriers_container_width * 2.0)
 }
 
-fn calculate_max_barriers_container_width(a: &[&Barrier], b: &[&Barrier]) -> f64 {
+fn calculate_max_barriers_container_width(a: &HashSet<&str>, b: &HashSet<&str>) -> f64 {
     let aw = calculate_barriers_container_width(a);
     let bw = calculate_barriers_container_width(b);
     aw.max(bw)
