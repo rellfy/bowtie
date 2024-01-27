@@ -40,12 +40,14 @@ where
     let causes = diagram
         .components
         .iter()
-        .filter(|c| c.kind == ComponentKind::Cause);
+        .filter(|c| c.kind == ComponentKind::Cause)
+        .collect::<Vec<&Component>>();
     let consequences = diagram
         .components
         .iter()
-        .filter(|c| c.kind == ComponentKind::Consequence);
-    let (r, canvas) = setup_canvas(r, causes.clone(), consequences.clone());
+        .filter(|c| c.kind == ComponentKind::Consequence)
+        .collect::<Vec<&Component>>();
+    let (r, canvas) = setup_canvas(r, &causes, &consequences);
     // Draw a border around the canvas, mostly for debugging purposes.
     let r = r.draw_rectangle(&Rectangle {
         centre: Vector2 {
@@ -55,8 +57,8 @@ where
         width: canvas.width,
         height: canvas.height,
     });
-    let r = render_components(r, causes, ComponentKind::Cause, &canvas);
-    let r = render_components(r, consequences, ComponentKind::Consequence, &canvas);
+    let r = render_components(r, &causes, ComponentKind::Cause, &canvas);
+    let r = render_components(r, &consequences, ComponentKind::Consequence, &canvas);
     let r = render_event_circle(r, &diagram, &canvas);
     r.into_bytes()
 }
@@ -88,10 +90,8 @@ where
     r
 }
 
-fn setup_canvas<'a, R, Ca, Co>(r: R, causes: Ca, consequences: Co) -> (R, Canvas)
+fn setup_canvas<'a, R>(r: R, causes: &[&Component], consequences: &[&Component]) -> (R, Canvas)
 where
-    Ca: Iterator<Item = &'a Component> + Clone,
-    Co: Iterator<Item = &'a Component> + Clone,
     R: Renderer,
 {
     let causes_container_height = calculate_components_container_height(causes);
@@ -108,17 +108,18 @@ where
     (r, canvas)
 }
 
-fn calculate_components_container_height<'a, C>(components: C) -> f64
-where
-    C: Iterator<Item = &'a Component> + Clone,
-{
-    let components_count = components.count() as f64;
+fn calculate_components_container_height<'a>(components: &[&Component]) -> f64 {
+    let components_count = components.len() as f64;
     components_count * COMPONENT_HEIGHT + ((components_count - 1.0) * COMPONENT_MARGIN_BOTTOM)
 }
 
-fn render_components<'a, C, R>(mut r: R, components: C, kind: ComponentKind, canvas: &Canvas) -> R
+fn render_components<'a, R>(
+    mut r: R,
+    components: &[&Component],
+    kind: ComponentKind,
+    canvas: &Canvas,
+) -> R
 where
-    C: Iterator<Item = &'a Component> + Clone,
     R: Renderer,
 {
     let is_cause = kind == ComponentKind::Cause;
@@ -128,8 +129,8 @@ where
         canvas.consequences_container_height
     };
     let components_container_top = (canvas.height / 2.0) - (container_height / 2.0);
-    let longest_name = components.clone().map(|c| c.name.len()).max().unwrap_or(0) as f64;
-    for (i, component) in components.enumerate().map(|(i, c)| (i as f64, c)) {
+    let longest_name = components.iter().map(|c| c.name.len()).max().unwrap_or(0) as f64;
+    for (i, component) in components.iter().enumerate().map(|(i, c)| (i as f64, c)) {
         let height = 50.0;
         let y_relative = i * COMPONENT_HEIGHT + (i * COMPONENT_MARGIN_BOTTOM);
         let y = components_container_top + y_relative + (height / 2.0);
