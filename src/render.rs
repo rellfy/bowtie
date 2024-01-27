@@ -94,8 +94,8 @@ where
     Co: Iterator<Item = &'a Component> + Clone,
     R: Renderer,
 {
-    let causes_container_height = calculate_container_height(causes);
-    let consequences_container_height = calculate_container_height(consequences);
+    let causes_container_height = calculate_components_container_height(causes);
+    let consequences_container_height = calculate_components_container_height(consequences);
     let max_container_height = causes_container_height.max(consequences_container_height);
     let canvas_height = max_container_height * 1.1 + 50.0;
     let canvas = Canvas {
@@ -108,7 +108,7 @@ where
     (r, canvas)
 }
 
-fn calculate_container_height<'a, C>(components: C) -> f64
+fn calculate_components_container_height<'a, C>(components: C) -> f64
 where
     C: Iterator<Item = &'a Component> + Clone,
 {
