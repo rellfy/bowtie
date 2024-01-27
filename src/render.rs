@@ -1,7 +1,11 @@
 use crate::{Component, ComponentKind, Diagram};
+use std::sync::Barrier;
 
 const COMPONENT_HEIGHT: f64 = 50.0;
+const BARRIER_WIDTH: f64 = 50.0;
 const COMPONENT_MARGIN_BOTTOM: f64 = 20.0;
+const BARRIER_MARGIN_RIGHT: f64 = 50.0;
+const BARRIERS_CONTAINER_HORIZONTAL_PADDING: f64 = 150.0;
 
 #[derive(Clone, Copy, Debug)]
 pub struct Vector2 {
@@ -67,7 +71,7 @@ fn render_event_circle<R>(r: R, diagram: &Diagram, canvas: &Canvas) -> R
 where
     R: Renderer,
 {
-    let width = (diagram.event.len() as f64) * 13.0 + 5.0;
+    let width = text_width(&diagram.event);
     let radius = width / 2.0;
     let r = r.draw_circle(
         radius,
@@ -108,9 +112,19 @@ where
     (r, canvas)
 }
 
-fn calculate_components_container_height<'a>(components: &[&Component]) -> f64 {
+fn calculate_components_container_height(components: &[&Component]) -> f64 {
     let components_count = components.len() as f64;
     components_count * COMPONENT_HEIGHT + ((components_count - 1.0) * COMPONENT_MARGIN_BOTTOM)
+}
+
+fn calculate_barriers_container_width(barriers: &[&Barrier]) -> f64 {
+    let barriers_count = barriers.len() as f64;
+    let padding = BARRIERS_CONTAINER_HORIZONTAL_PADDING * 2.0;
+    barriers_count * BARRIER_WIDTH * ((barriers_count - 1.0) * BARRIER_MARGIN_RIGHT) + padding
+}
+
+fn calculate_canvas_width(components: &[&Component], barriers_container_width: f64) -> f64 {
+    0.0
 }
 
 fn render_components<'a, R>(
@@ -129,12 +143,17 @@ where
         canvas.consequences_container_height
     };
     let components_container_top = (canvas.height / 2.0) - (container_height / 2.0);
-    let longest_name = components.iter().map(|c| c.name.len()).max().unwrap_or(0) as f64;
+    let longest_box_width = components
+        .iter()
+        .map(|c| text_width(&c.name) as u32)
+        .max()
+        .map(|v| v as f64)
+        .unwrap_or(0.0);
     for (i, component) in components.iter().enumerate().map(|(i, c)| (i as f64, c)) {
         let height = 50.0;
         let y_relative = i * COMPONENT_HEIGHT + (i * COMPONENT_MARGIN_BOTTOM);
         let y = components_container_top + y_relative + (height / 2.0);
-        let box_width = longest_name * 15.0;
+        let box_width = longest_box_width;
         let x = if is_cause {
             (box_width / 2.0) + 10.0
         } else {
@@ -156,4 +175,8 @@ impl Rectangle {
         self.height += padding;
         self
     }
+}
+
+pub fn text_width(text: &str) -> f64 {
+    text.len() as f64 * 15.0
 }
