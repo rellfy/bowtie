@@ -1,4 +1,4 @@
-use crate::brush::render_diagram;
+use crate::brush::Brush;
 use crate::renderer::Renderer;
 pub(crate) mod brush;
 pub mod renderer;
@@ -28,7 +28,7 @@ where
     R: Renderer,
 {
     let diagram = parse_diagram(input);
-    render_diagram(renderer, &diagram)
+    Brush::render_diagram_into_bytes(renderer, &diagram)
 }
 
 fn parse_diagram(input: &str) -> Diagram {
