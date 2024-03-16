@@ -4,6 +4,7 @@ use std::collections::HashSet;
 const COMPONENT_HEIGHT: f64 = 50.0;
 const BARRIER_WIDTH: f64 = 50.0;
 const COMPONENT_MARGIN_BOTTOM: f64 = 20.0;
+const COMPONENT_PADDING_X: f64 = 10.0;
 const BARRIER_MARGIN_RIGHT: f64 = 50.0;
 const BARRIERS_CONTAINER_HORIZONTAL_PADDING: f64 = 150.0;
 
@@ -35,6 +36,9 @@ struct Canvas {
     width: f64,
     causes_container_height: f64,
     consequences_container_height: f64,
+    max_component_box_width: f64,
+    circle_left_point: Option<Vector2>,
+    circle_right_point: Option<Vector2>,
 }
 
 pub(crate) fn render_diagram<R>(r: R, diagram: &Diagram) -> Vec<u8>
@@ -52,7 +56,7 @@ where
         "max barrier container width: {}",
         max_barrier_container_width
     );
-    let (r, canvas) = setup_canvas(
+    let (r, mut canvas) = setup_canvas(
         r,
         &causes,
         &consequences,
@@ -69,21 +73,11 @@ where
         width: canvas.width,
         height: canvas.height,
     });
-    let r = render_components(
-        r,
-        &causes,
-        ComponentKind::Cause,
-        &canvas,
-        max_component_box_width,
-    );
-    let r = render_components(
-        r,
-        &consequences,
-        ComponentKind::Consequence,
-        &canvas,
-        max_component_box_width,
-    );
-    let r = render_event_circle(r, &diagram, &canvas);
+    let r = render_components(r, &causes, ComponentKind::Cause, &canvas);
+    let r = render_components(r, &consequences, ComponentKind::Consequence, &canvas);
+    let r = render_event_circle(r, &diagram, &mut canvas);
+    let r = render_barrier_lines(r, &canvas, &causes, ComponentKind::Cause);
+    let r = render_barrier_lines(r, &canvas, &consequences, ComponentKind::Consequence);
     r.into_bytes()
 }
 
@@ -105,7 +99,7 @@ fn filter_barriers<'a>(components: &'a [&Component]) -> HashSet<&'a str> {
     barriers
 }
 
-fn render_event_circle<R>(r: R, diagram: &Diagram, canvas: &Canvas) -> R
+fn render_event_circle<R>(r: R, diagram: &Diagram, canvas: &mut Canvas) -> R
 where
     R: Renderer,
 {
@@ -128,6 +122,41 @@ where
             height: radius,
         },
     );
+    canvas.circle_left_point = Some(Vector2 {
+        x: canvas.width / 2.0 - radius,
+        y: canvas.height / 2.0,
+    });
+    canvas.circle_right_point = Some(Vector2 {
+        x: canvas.width / 2.0 + radius,
+        y: canvas.height / 2.0,
+    });
+    r
+}
+
+fn render_barrier_lines<R>(
+    mut r: R,
+    canvas: &Canvas,
+    components: &[&Component],
+    kind: ComponentKind,
+) -> R
+where
+    R: Renderer,
+{
+    let circle_point = if kind == ComponentKind::Cause {
+        canvas.circle_left_point.as_ref().unwrap()
+    } else {
+        canvas.circle_right_point.as_ref().unwrap()
+    };
+    for (i, _) in components.into_iter().enumerate() {
+        let y = get_component_y_center(i as f64, &kind, &canvas);
+        let x_center = get_component_x_center(&kind, &canvas);
+        let x_edge = match kind {
+            ComponentKind::Cause => x_center + canvas.max_component_box_width / 2.0,
+            ComponentKind::Consequence => x_center - canvas.max_component_box_width / 2.0,
+        };
+        let component_point = Vector2 { x: x_edge, y };
+        r = r.draw_line(&component_point, &circle_point);
+    }
     r
 }
 
@@ -161,6 +190,9 @@ where
         width,
         causes_container_height,
         consequences_container_height,
+        max_component_box_width,
+        circle_left_point: None,
+        circle_right_point: None,
     };
     let r = r.setup(canvas.width, canvas.height);
     (r, canvas)
@@ -213,35 +245,40 @@ fn render_components<'a, R>(
     components: &[&Component],
     kind: ComponentKind,
     canvas: &Canvas,
-    max_component_box_width: f64,
 ) -> R
 where
     R: Renderer,
 {
-    let is_cause = kind == ComponentKind::Cause;
-    let container_height = if is_cause {
-        canvas.causes_container_height
-    } else {
-        canvas.consequences_container_height
-    };
-    let components_container_top = (canvas.height / 2.0) - (container_height / 2.0);
     for (i, component) in components.iter().enumerate().map(|(i, c)| (i as f64, c)) {
-        let height = 50.0;
-        let y_relative = i * COMPONENT_HEIGHT + (i * COMPONENT_MARGIN_BOTTOM);
-        let y = components_container_top + y_relative + (height / 2.0);
-        let x = if is_cause {
-            (max_component_box_width / 2.0) + 10.0
-        } else {
-            canvas.width - (max_component_box_width / 2.0) - 10.0
-        };
+        let y = get_component_y_center(i, &kind, &canvas);
+        let x = get_component_x_center(&kind, &canvas);
         let rectangle = Rectangle {
             centre: Vector2 { x, y },
-            width: max_component_box_width,
-            height,
+            width: canvas.max_component_box_width,
+            height: COMPONENT_HEIGHT,
         };
         r = r.draw_text_with_rectangle(&component.name, &rectangle);
     }
     r
+}
+
+fn get_component_x_center(kind: &ComponentKind, canvas: &Canvas) -> f64 {
+    match kind {
+        ComponentKind::Cause => (canvas.max_component_box_width / 2.0) + COMPONENT_PADDING_X,
+        ComponentKind::Consequence => {
+            canvas.width - (canvas.max_component_box_width / 2.0) - COMPONENT_PADDING_X
+        }
+    }
+}
+
+fn get_component_y_center(i: f64, kind: &ComponentKind, canvas: &Canvas) -> f64 {
+    let container_height = match kind {
+        ComponentKind::Cause => canvas.causes_container_height,
+        ComponentKind::Consequence => canvas.consequences_container_height,
+    };
+    let components_container_top = (canvas.height / 2.0) - (container_height / 2.0);
+    let y_relative = i * COMPONENT_HEIGHT + (i * COMPONENT_MARGIN_BOTTOM);
+    components_container_top + y_relative + (COMPONENT_HEIGHT / 2.0)
 }
 
 impl Rectangle {
