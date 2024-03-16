@@ -1,5 +1,5 @@
 use bowtie::generate_bowtie;
-use bowtie::svg::SvgRenderer;
+use bowtie::renderer::SvgRenderer;
 
 const INPUT: &str = include_str!("./chemical_spillage.txt");
 

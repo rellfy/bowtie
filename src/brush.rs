@@ -1,3 +1,6 @@
+//! This module is responsible for drawing on the canvas relying on
+//! a renderer and its context.
+use crate::renderer::{Rectangle, Renderer, Vector2};
 use crate::{Component, ComponentKind, Diagram};
 use std::collections::HashSet;
 
@@ -8,28 +11,14 @@ const COMPONENT_PADDING_X: f64 = 10.0;
 const BARRIER_MARGIN_RIGHT: f64 = 50.0;
 const BARRIERS_CONTAINER_HORIZONTAL_PADDING: f64 = 150.0;
 
-#[derive(Clone, Copy, Debug)]
-pub struct Vector2 {
-    pub x: f64,
-    pub y: f64,
+struct Brush<R: Renderer> {
+    renderer: R,
+    context: Context,
+    diagram: Diagram,
 }
 
-#[derive(Clone, Copy)]
-pub struct Rectangle {
-    pub centre: Vector2,
-    pub width: f64,
-    pub height: f64,
-}
-
-pub trait Renderer {
-    fn setup(self, width: f64, height: f64) -> Self;
-    fn draw_line(self, from: &Vector2, to: &Vector2) -> Self;
-    fn draw_circle(self, radius: f64, centre: &Vector2) -> Self;
-    fn draw_text(self, text: &str, containment: &Rectangle) -> Self;
-    fn draw_rectangle(self, rectangle: &Rectangle) -> Self;
-    fn draw_text_with_rectangle(self, text: &str, rectangle: &Rectangle) -> Self;
-    fn into_bytes(self) -> Vec<u8>;
-}
+/// Holds state variables for rendering purposes.
+struct Context {}
 
 struct Canvas {
     height: f64,
@@ -279,14 +268,6 @@ fn get_component_y_center(i: f64, kind: &ComponentKind, canvas: &Canvas) -> f64 
     let components_container_top = (canvas.height / 2.0) - (container_height / 2.0);
     let y_relative = i * COMPONENT_HEIGHT + (i * COMPONENT_MARGIN_BOTTOM);
     components_container_top + y_relative + (COMPONENT_HEIGHT / 2.0)
-}
-
-impl Rectangle {
-    pub fn with_padding(mut self, padding: f64) -> Self {
-        self.width += padding;
-        self.height += padding;
-        self
-    }
 }
 
 pub fn text_width(text: &str) -> f64 {

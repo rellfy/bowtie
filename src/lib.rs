@@ -1,6 +1,7 @@
-use crate::render::{render_diagram, Renderer};
-mod render;
-pub mod svg;
+use crate::brush::render_diagram;
+use crate::renderer::Renderer;
+pub(crate) mod brush;
+pub mod renderer;
 
 #[derive(Default, Debug)]
 struct Diagram {

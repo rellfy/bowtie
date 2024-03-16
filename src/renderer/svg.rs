@@ -1,4 +1,4 @@
-use crate::render::{Rectangle, Renderer, Vector2};
+use crate::renderer::{Rectangle, Renderer, Vector2};
 use svg::node::element::path::Data;
 use svg::node::element::{Circle, Path, Text};
 use svg::Document;
