@@ -2,10 +2,11 @@
 //! a renderer and its context.
 use crate::renderer::{Rectangle, Renderer, Vector2};
 use crate::{Component, ComponentKind, Diagram};
-use std::collections::HashSet;
+use std::collections::{HashMap, HashSet};
 
 const COMPONENT_HEIGHT: f64 = 50.0;
-const BARRIER_WIDTH: f64 = 50.0;
+const BARRIER_WIDTH: f64 = 25.0;
+const BARRIER_PADDING_RIGHT: f64 = 10.0;
 const COMPONENT_MARGIN_BOTTOM: f64 = 20.0;
 const COMPONENT_PADDING_X: f64 = 10.0;
 const BARRIER_MARGIN_RIGHT: f64 = 50.0;
@@ -76,6 +77,8 @@ impl<'d> Brush<'d> {
         r = self.render_event_circle(r);
         r = self.render_barrier_lines(r, ComponentKind::Cause);
         r = self.render_barrier_lines(r, ComponentKind::Consequence);
+        r = self.render_barriers(r, ComponentKind::Cause);
+        r = self.render_barriers(r, ComponentKind::Consequence);
         r.into_bytes()
     }
 
@@ -136,11 +139,7 @@ impl<'d> Brush<'d> {
         R: Renderer,
     {
         let components = self.get_components(&kind);
-        let circle_point = if kind == ComponentKind::Cause {
-            self.context.circle_left_point.as_ref().unwrap()
-        } else {
-            self.context.circle_right_point.as_ref().unwrap()
-        };
+        let circle_point = self.get_component_circle_point(&kind);
         for (i, _) in components.into_iter().enumerate() {
             let y = get_component_y_center(i as f64, &kind, &self.context);
             let x_center = get_component_x_center(&kind, &self.context);
@@ -154,12 +153,64 @@ impl<'d> Brush<'d> {
         r
     }
 
+    fn render_barriers<R>(&mut self, mut r: R, kind: ComponentKind) -> R
+    where
+        R: Renderer,
+    {
+        let components = self.get_components(&kind);
+        let circle_point = self.get_component_circle_point(&kind);
+        let barriers: HashSet<String> =
+            components.iter().flat_map(|c| c.barriers.clone()).collect();
+        let barrier_frequencies = get_barrier_frequencies(components)
+            .into_iter()
+            .map(|(barrier, _)| barrier);
+        for (i, barrier) in barrier_frequencies.enumerate() {
+            let components = components.iter().enumerate().filter_map(|(j, c)| {
+                if c.barriers.contains(&barrier) {
+                    Some((j, c))
+                } else {
+                    None
+                }
+            });
+            for (j, component) in components {
+                let x = get_barrier_x_center(i as f64, &kind, &self.context);
+                let y = get_component_y_center(j as f64, &kind, &self.context);
+                r = r.draw_rectangle(&Rectangle {
+                    centre: Vector2 { x, y },
+                    height: COMPONENT_HEIGHT,
+                    width: BARRIER_WIDTH,
+                });
+            }
+        }
+        r
+    }
+
     fn get_components(&self, kind: &ComponentKind) -> &[&Component] {
         match kind {
             ComponentKind::Cause => &self.causes,
             ComponentKind::Consequence => &self.consequences,
         }
     }
+
+    fn get_component_circle_point(&self, kind: &ComponentKind) -> Vector2 {
+        match kind {
+            ComponentKind::Cause => self.context.circle_left_point.unwrap().clone(),
+            ComponentKind::Consequence => self.context.circle_right_point.unwrap().clone(),
+        }
+    }
+}
+
+fn get_barrier_frequencies(components: &[&Component]) -> Vec<(String, u32)> {
+    let mut frequencies = HashMap::new();
+    for component in components {
+        for barrier in &component.barriers {
+            let frequency = frequencies.entry(barrier.clone()).or_insert(0);
+            *frequency += 1;
+        }
+    }
+    let mut frequencies = frequencies.into_iter().collect::<Vec<(_, _)>>();
+    frequencies.sort_by(|a, b| a.1.cmp(&b.1).reverse());
+    frequencies
 }
 
 fn filter_components(diagram: &Diagram, kind: ComponentKind) -> Vec<&Component> {
@@ -260,23 +311,43 @@ fn calculate_max_component_box_width(components: &[&Component]) -> f64 {
         .unwrap_or(0.0)
 }
 
-fn get_component_x_center(kind: &ComponentKind, canvas: &Context) -> f64 {
+fn get_component_x_center(kind: &ComponentKind, ctx: &Context) -> f64 {
     match kind {
-        ComponentKind::Cause => (canvas.max_component_box_width / 2.0) + COMPONENT_PADDING_X,
+        ComponentKind::Cause => (ctx.max_component_box_width / 2.0) + COMPONENT_PADDING_X,
         ComponentKind::Consequence => {
-            canvas.canvas_width - (canvas.max_component_box_width / 2.0) - COMPONENT_PADDING_X
+            ctx.canvas_width - (ctx.max_component_box_width / 2.0) - COMPONENT_PADDING_X
         }
     }
 }
 
-fn get_component_y_center(i: f64, kind: &ComponentKind, canvas: &Context) -> f64 {
+fn get_component_y_center(i: f64, kind: &ComponentKind, ctx: &Context) -> f64 {
     let container_height = match kind {
-        ComponentKind::Cause => canvas.causes_container_height,
-        ComponentKind::Consequence => canvas.consequences_container_height,
+        ComponentKind::Cause => ctx.causes_container_height,
+        ComponentKind::Consequence => ctx.consequences_container_height,
     };
-    let components_container_top = (canvas.canvas_height / 2.0) - (container_height / 2.0);
+    let components_container_top = (ctx.canvas_height / 2.0) - (container_height / 2.0);
     let y_relative = i * COMPONENT_HEIGHT + (i * COMPONENT_MARGIN_BOTTOM);
     components_container_top + y_relative + (COMPONENT_HEIGHT / 2.0)
+}
+
+fn get_barrier_x_center(i: f64, kind: &ComponentKind, ctx: &Context) -> f64 {
+    let component_x = get_component_x_center(kind, ctx);
+    match kind {
+        ComponentKind::Cause => {
+            component_x
+                + (ctx.max_component_box_width / 2.0)
+                + (i * (BARRIER_WIDTH + BARRIER_PADDING_RIGHT))
+                + ((i + 1.0) * BARRIER_PADDING_RIGHT)
+                + BARRIER_WIDTH / 2.0
+        }
+        ComponentKind::Consequence => {
+            component_x
+                - (ctx.max_component_box_width / 2.0)
+                - (i * (BARRIER_WIDTH))
+                - ((i + 1.0) * BARRIER_PADDING_RIGHT)
+                - BARRIER_WIDTH / 2.0
+        }
+    }
 }
 
 pub fn text_width(text: &str) -> f64 {
