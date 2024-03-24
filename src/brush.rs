@@ -163,6 +163,18 @@ impl<'d> Brush<'d> {
             .into_iter()
             .map(|(barrier, _)| barrier);
         for (i, barrier) in barrier_frequencies.enumerate() {
+            let x = get_barrier_x_center(i as f64, &kind, &self.context);
+            r = r.draw_text(
+                &format!("{}", i + 1),
+                &Rectangle {
+                    centre: Vector2 {
+                        x,
+                        y: get_component_y_center(-1.0, &kind, &self.context),
+                    },
+                    height: COMPONENT_HEIGHT,
+                    width: BARRIER_WIDTH,
+                },
+            );
             let components = components.iter().enumerate().filter_map(|(j, c)| {
                 if c.barriers.contains(&barrier) {
                     Some((j, c))
@@ -171,7 +183,6 @@ impl<'d> Brush<'d> {
                 }
             });
             for (j, component) in components {
-                let x = get_barrier_x_center(i as f64, &kind, &self.context);
                 let y = get_component_y_center(j as f64, &kind, &self.context);
                 r = r.draw_rectangle(&Rectangle {
                     centre: Vector2 { x, y },
@@ -248,7 +259,7 @@ where
     let causes_container_height = calculate_components_container_height(causes);
     let consequences_container_height = calculate_components_container_height(consequences);
     let max_container_height = causes_container_height.max(consequences_container_height);
-    let canvas_height = max_container_height * 1.1 + 50.0;
+    let canvas_height = max_container_height * 1.1 + 150.0;
     let canvas_width = calculate_canvas_width(
         diagram,
         max_component_box_width,
