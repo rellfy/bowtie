@@ -77,8 +77,8 @@ impl<'d> Brush<'d> {
         r = self.render_event_circle(r);
         r = self.render_barrier_lines(r, ComponentKind::Cause);
         r = self.render_barrier_lines(r, ComponentKind::Consequence);
-        r = self.render_barriers(r, ComponentKind::Cause);
-        r = self.render_barriers(r, ComponentKind::Consequence);
+        r = self.render_barriers(r, ComponentKind::Cause, 0);
+        r = self.render_barriers(r, ComponentKind::Consequence, self.causes.len());
         r.into_bytes()
     }
 
@@ -153,7 +153,7 @@ impl<'d> Brush<'d> {
         r
     }
 
-    fn render_barriers<R>(&mut self, mut r: R, kind: ComponentKind) -> R
+    fn render_barriers<R>(&mut self, mut r: R, kind: ComponentKind, id_offset: usize) -> R
     where
         R: Renderer,
     {
@@ -165,7 +165,7 @@ impl<'d> Brush<'d> {
         for (i, barrier) in barrier_frequencies.enumerate() {
             let x = get_barrier_x_center(i as f64, &kind, &self.context);
             r = r.draw_text(
-                &format!("{}", i + 1),
+                &format!("{}", id_offset + i + 1),
                 &Rectangle {
                     centre: Vector2 {
                         x,
@@ -182,7 +182,7 @@ impl<'d> Brush<'d> {
                     None
                 }
             });
-            for (j, component) in components {
+            for (j, _) in components {
                 let y = get_component_y_center(j as f64, &kind, &self.context);
                 r = r.draw_rectangle(&Rectangle {
                     centre: Vector2 { x, y },
