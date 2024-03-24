@@ -159,8 +159,6 @@ impl<'d> Brush<'d> {
     {
         let components = self.get_components(&kind);
         let circle_point = self.get_component_circle_point(&kind);
-        let barriers: HashSet<String> =
-            components.iter().flat_map(|c| c.barriers.clone()).collect();
         let barrier_frequencies = get_barrier_frequencies(components)
             .into_iter()
             .map(|(barrier, _)| barrier);
