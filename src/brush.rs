@@ -164,8 +164,9 @@ impl<'d> Brush<'d> {
             .map(|(barrier, _)| barrier);
         for (i, barrier) in barrier_frequencies.enumerate() {
             let x = get_barrier_x_center(i as f64, &kind, &self.context);
+            let label_id = format!("{}", id_offset + i + 1);
             r = r.draw_text(
-                &format!("{}", id_offset + i + 1),
+                &label_id,
                 &Rectangle {
                     centre: Vector2 {
                         x,
@@ -175,20 +176,36 @@ impl<'d> Brush<'d> {
                     width: BARRIER_WIDTH,
                 },
             );
-            let components = components.iter().enumerate().filter_map(|(j, c)| {
+            let barrier_components = components.iter().enumerate().filter_map(|(j, c)| {
                 if c.barriers.contains(&barrier) {
                     Some((j, c))
                 } else {
                     None
                 }
             });
-            for (j, _) in components {
-                let y = get_component_y_center(j as f64, &kind, &self.context);
+            for (j, _) in barrier_components {
+                let barrier_y = get_component_y_center(j as f64, &kind, &self.context);
+                // Render barrier rectangle.
                 r = r.draw_rectangle(&Rectangle {
-                    centre: Vector2 { x, y },
+                    centre: Vector2 { x, y: barrier_y },
                     height: COMPONENT_HEIGHT,
                     width: BARRIER_WIDTH,
                 });
+                // Render barrier label.
+                let label_y =
+                    get_component_y_center((components.len() + j) as f64, &kind, &self.context);
+                let label_x = get_component_x_center(&kind, &self.context);
+                r = r.draw_text(
+                    &format!("{label_id}: {barrier}"),
+                    &Rectangle {
+                        centre: Vector2 {
+                            y: label_y,
+                            x: label_x,
+                        },
+                        width: self.context.max_component_box_width,
+                        height: COMPONENT_HEIGHT,
+                    },
+                );
             }
         }
         r
@@ -258,7 +275,10 @@ where
 {
     let causes_container_height = calculate_components_container_height(causes);
     let consequences_container_height = calculate_components_container_height(consequences);
-    let max_container_height = causes_container_height.max(consequences_container_height);
+    let max_barriers_height =
+        calculate_barriers_height(causes) + calculate_barriers_height(consequences);
+    let max_container_height =
+        causes_container_height.max(consequences_container_height) + max_barriers_height;
     let canvas_height = max_container_height * 1.1 + 150.0;
     let canvas_width = calculate_canvas_width(
         diagram,
@@ -280,7 +300,20 @@ where
 
 fn calculate_components_container_height(components: &[&Component]) -> f64 {
     let components_count = components.len() as f64;
+    calculate_components_container_height_by_count(components_count)
+}
+
+fn calculate_components_container_height_by_count(components_count: f64) -> f64 {
     components_count * COMPONENT_HEIGHT + ((components_count - 1.0) * COMPONENT_MARGIN_BOTTOM)
+}
+
+fn calculate_barriers_height(components: &[&Component]) -> f64 {
+    let barriers = components
+        .iter()
+        .flat_map(|c| c.barriers.clone())
+        .collect::<HashSet<String>>()
+        .len();
+    calculate_components_container_height_by_count(barriers as f64)
 }
 
 fn calculate_barriers_container_width(barriers: &HashSet<&str>) -> f64 {
