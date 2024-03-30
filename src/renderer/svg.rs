@@ -1,9 +1,9 @@
-use crate::renderer::{Rectangle, Renderer, Vector2};
+use crate::renderer::{Alignment, Rectangle, Renderer, Vector2};
 use svg::node::element::path::Data;
 use svg::node::element::{Circle, Path, Text};
 use svg::Document;
 
-const FONT_WIDTH: f64 = 1.8;
+const FONT_WIDTH: f64 = 1.7;
 const FONT_FAMILY: &str = "Courier, monospace";
 const DEFAULT_BG_FILL: &str = "white";
 
@@ -50,11 +50,15 @@ impl Renderer for SvgRenderer {
         self
     }
 
-    fn draw_text(mut self, text: &str, containment: &Rectangle) -> Self {
+    fn draw_text(mut self, text: &str, containment: &Rectangle, alignment: Alignment) -> Self {
         let font_size = 18.0;
         let width = (text.len() as f64) * font_size / FONT_WIDTH;
         let y = containment.centre.y + (font_size / (FONT_WIDTH * 2.0));
-        let x = containment.centre.x - (width / FONT_WIDTH);
+        let x = match alignment {
+            Alignment::Center => containment.centre.x - (width / 2.0),
+            Alignment::Left => containment.centre.x - (containment.width / 2.0),
+            Alignment::Right => containment.centre.x + (containment.width / 2.0) - width,
+        };
         let text = Text::new()
             .set("x", x)
             .set("y", y)
@@ -87,9 +91,14 @@ impl Renderer for SvgRenderer {
         self
     }
 
-    fn draw_text_with_rectangle(mut self, text: &str, rectangle: &Rectangle) -> Self {
+    fn draw_text_with_rectangle(
+        mut self,
+        text: &str,
+        rectangle: &Rectangle,
+        alignment: Alignment,
+    ) -> Self {
         self = self.draw_rectangle(&rectangle.with_padding(2.0));
-        self = self.draw_text(text, &rectangle);
+        self = self.draw_text(text, &rectangle, alignment);
         self
     }
 

@@ -1,6 +1,6 @@
 //! This module is responsible for drawing on the canvas relying on
 //! a renderer and its context.
-use crate::renderer::{Rectangle, Renderer, Vector2};
+use crate::renderer::{Alignment, Rectangle, Renderer, Vector2};
 use crate::{Component, ComponentKind, Diagram};
 use std::collections::{HashMap, HashSet};
 
@@ -104,6 +104,7 @@ impl<'d> Brush<'d> {
                 width: radius,
                 height: radius,
             },
+            Alignment::Center,
         );
         self.context.circle_left_point = Some(Vector2 {
             x: self.context.canvas_width / 2.0 - radius,
@@ -129,7 +130,7 @@ impl<'d> Brush<'d> {
                 width: self.context.max_component_box_width,
                 height: COMPONENT_HEIGHT,
             };
-            r = r.draw_text_with_rectangle(&component.name, &rectangle);
+            r = r.draw_text_with_rectangle(&component.name, &rectangle, Alignment::Center);
         }
         r
     }
@@ -178,6 +179,7 @@ impl<'d> Brush<'d> {
                     height: COMPONENT_HEIGHT,
                     width: BARRIER_WIDTH,
                 },
+                Alignment::Center,
             );
             let barrier_components = components.iter().enumerate().filter_map(|(j, c)| {
                 if c.barriers.contains(&barrier) {
@@ -200,6 +202,7 @@ impl<'d> Brush<'d> {
                     width: self.context.max_component_box_width,
                     height: COMPONENT_HEIGHT,
                 },
+                get_barrier_label_alignment(&kind),
             );
             for (j, _) in barrier_components {
                 let barrier_point =
@@ -409,4 +412,11 @@ fn get_slope_point(from: &Vector2, to: &Vector2, x: f64) -> Vector2 {
     let delta_x = x - from.x;
     let y = from.y + (slope * delta_x);
     Vector2 { x, y }
+}
+
+fn get_barrier_label_alignment(kind: &ComponentKind) -> Alignment {
+    match kind {
+        ComponentKind::Cause => Alignment::Left,
+        ComponentKind::Consequence => Alignment::Right,
+    }
 }
