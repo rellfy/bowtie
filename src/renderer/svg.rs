@@ -3,6 +3,8 @@ use svg::node::element::path::Data;
 use svg::node::element::{Circle, Path, Text};
 use svg::Document;
 
+const FONT_WIDTH: f64 = 1.8;
+const FONT_FAMILY: &str = "Courier, monospace";
 const DEFAULT_BG_FILL: &str = "white";
 
 pub struct SvgRenderer {
@@ -49,15 +51,16 @@ impl Renderer for SvgRenderer {
     }
 
     fn draw_text(mut self, text: &str, containment: &Rectangle) -> Self {
-        let font_size = 24.0;
-        let width = (text.len() as f64) * font_size / 2.0;
-        let y = containment.centre.y + (font_size / 4.0);
-        let x = containment.centre.x - (width / 2.2);
+        let font_size = 18.0;
+        let width = (text.len() as f64) * font_size / FONT_WIDTH;
+        let y = containment.centre.y + (font_size / (FONT_WIDTH * 2.0));
+        let x = containment.centre.x - (width / FONT_WIDTH);
         let text = Text::new()
             .set("x", x)
             .set("y", y)
             .set("font-size", font_size)
             .set("fill", "black")
+            .set("font-family", FONT_FAMILY)
             .add(svg::node::Text::new(text));
         self.document = self.document.add(text);
         self
@@ -78,7 +81,7 @@ impl Renderer for SvgRenderer {
             .set("fill", DEFAULT_BG_FILL)
             .set("stroke", "black")
             .set("stroke-width", self.stroke_width)
-            .set("font-family", "Lucida Console")
+            .set("font-family", FONT_FAMILY)
             .set("d", data);
         self.document = self.document.add(path);
         self
