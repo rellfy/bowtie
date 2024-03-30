@@ -193,7 +193,7 @@ impl<'d> Brush<'d> {
                 get_component_y_center((components.len() + i) as f64, &kind, &self.context);
             let label_x = get_component_x_center(&kind, &self.context);
             r = r.draw_text(
-                &format!("{label_id}: {barrier}"),
+                &get_barrier_label(&kind, &label_id, &barrier),
                 &Rectangle {
                     centre: Vector2 {
                         y: label_y,
@@ -418,5 +418,12 @@ fn get_barrier_label_alignment(kind: &ComponentKind) -> Alignment {
     match kind {
         ComponentKind::Cause => Alignment::Left,
         ComponentKind::Consequence => Alignment::Right,
+    }
+}
+
+fn get_barrier_label(kind: &ComponentKind, label_id: &str, barrier: &str) -> String {
+    match kind {
+        ComponentKind::Cause => format!("[{label_id}] {barrier}"),
+        ComponentKind::Consequence => format!("{barrier} [{label_id}]"),
     }
 }
