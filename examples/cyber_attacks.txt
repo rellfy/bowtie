@@ -1,0 +1,18 @@
+title Cyber Attacks
+cause Poor Cybersecurity Measures
+cause Insider Threats
+cause Software Vulnerabilities
+cause Hacking Attacks
+event Cyber Attacks
+consequence Data Breach
+consequence Disrupted Operations
+consequence Financial Loss
+consequence Legal Consequences
+barrier Installation of Firewall, Anti-virus, and other defensive Softwares: Poor Cybersecurity Measures
+barrier Rigorous Employee Screening: Insider Threats
+barrier Regular System Updates and Patches: Software Vulnerabilities
+barrier Intrusion Detection Systems: Hacking Attacks
+barrier Encrypted Data Storage: Data Breach
+barrier Disaster Recovery Plan: Disrupted Operations
+barrier Cyber Insurance: Financial Loss
+barrier Compliance to Data Protection Laws: Legal Consequences
