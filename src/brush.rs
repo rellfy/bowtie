@@ -186,6 +186,21 @@ impl<'d> Brush<'d> {
                     None
                 }
             });
+            // Render barrier label.
+            let label_y =
+                get_component_y_center((components.len() + i) as f64, &kind, &self.context);
+            let label_x = get_component_x_center(&kind, &self.context);
+            r = r.draw_text(
+                &format!("{label_id}: {barrier}"),
+                &Rectangle {
+                    centre: Vector2 {
+                        y: label_y,
+                        x: label_x,
+                    },
+                    width: self.context.max_component_box_width,
+                    height: COMPONENT_HEIGHT,
+                },
+            );
             for (j, _) in barrier_components {
                 let barrier_point =
                     get_slope_point(&self.get_component_edge(&kind, j), &circle_point, x);
@@ -195,21 +210,6 @@ impl<'d> Brush<'d> {
                     height: COMPONENT_HEIGHT,
                     width: BARRIER_WIDTH,
                 });
-                // Render barrier label.
-                let label_y =
-                    get_component_y_center((components.len() + j) as f64, &kind, &self.context);
-                let label_x = get_component_x_center(&kind, &self.context);
-                r = r.draw_text(
-                    &format!("{label_id}: {barrier}"),
-                    &Rectangle {
-                        centre: Vector2 {
-                            y: label_y,
-                            x: label_x,
-                        },
-                        width: self.context.max_component_box_width,
-                        height: COMPONENT_HEIGHT,
-                    },
-                );
             }
         }
         r
