@@ -141,16 +141,19 @@ impl<'d> Brush<'d> {
         let components = self.get_components(&kind);
         let circle_point = self.get_component_circle_point(&kind);
         for (i, _) in components.into_iter().enumerate() {
-            let y = get_component_y_center(i as f64, &kind, &self.context);
-            let x_center = get_component_x_center(&kind, &self.context);
-            let x_edge = match kind {
-                ComponentKind::Cause => x_center + self.context.max_component_box_width / 2.0,
-                ComponentKind::Consequence => x_center - self.context.max_component_box_width / 2.0,
-            };
-            let component_point = Vector2 { x: x_edge, y };
-            r = r.draw_line(&component_point, &circle_point);
+            r = r.draw_line(&self.get_component_edge(&kind, i), &circle_point);
         }
         r
+    }
+
+    fn get_component_edge(&self, kind: &ComponentKind, i: usize) -> Vector2 {
+        let y = get_component_y_center(i as f64, &kind, &self.context);
+        let x_center = get_component_x_center(&kind, &self.context);
+        let x_edge = match kind {
+            ComponentKind::Cause => x_center + self.context.max_component_box_width / 2.0,
+            ComponentKind::Consequence => x_center - self.context.max_component_box_width / 2.0,
+        };
+        Vector2 { x: x_edge, y }
     }
 
     fn render_barriers<R>(&mut self, mut r: R, kind: ComponentKind, id_offset: usize) -> R
@@ -184,10 +187,11 @@ impl<'d> Brush<'d> {
                 }
             });
             for (j, _) in barrier_components {
-                let barrier_y = get_component_y_center(j as f64, &kind, &self.context);
+                let barrier_point =
+                    get_slope_point(&self.get_component_edge(&kind, j), &circle_point, x);
                 // Render barrier rectangle.
                 r = r.draw_rectangle(&Rectangle {
-                    centre: Vector2 { x, y: barrier_y },
+                    centre: barrier_point,
                     height: COMPONENT_HEIGHT,
                     width: BARRIER_WIDTH,
                 });
@@ -394,4 +398,15 @@ fn get_barrier_x_center(i: f64, kind: &ComponentKind, ctx: &Context) -> f64 {
 
 pub fn text_width(text: &str) -> f64 {
     text.len() as f64 * 15.0
+}
+
+/// Adjusts the y-axis, given the x-axis, of a point on
+/// a slope defined by `from` and `to` points.
+fn get_slope_point(from: &Vector2, to: &Vector2, x: f64) -> Vector2 {
+    let run = to.x - from.x;
+    let rise = to.y - from.y;
+    let slope = rise / run;
+    let delta_x = x - from.x;
+    let y = from.y + (slope * delta_x);
+    Vector2 { x, y }
 }
